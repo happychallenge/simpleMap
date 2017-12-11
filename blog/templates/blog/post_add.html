@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load static bootstrap3 %}
+
+
+{% block css %}
+<link href="{% static 'css/plugins/switchery/switchery.css' %}" rel="stylesheet">  
+{% endblock css %}
+
+
+{% block main %}
+  <div class="container">
+      <div class="row">
+          <div class="col-sm-12">
+              <form action="" method="post" enctype="multipart/form-data">
+                  {% csrf_token %}
+                  {% bootstrap_form form %}
+                  <input type="submit" class="btn btn-primary" />
+              </form>
+          </div>
+      </div>
+  </div>
+{% endblock main %}
+
+
+{% block modal %}
+<!-- Modal --> 
+<div class="modal" tabindex="-1" role="dialog" id="modal-post">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Add Content</h3>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Modal body text goes here.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary">Save changes</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock modal %}
+
+
+{% block javascript %}
+  <script src="{% static 'js/plugins/switchery/switchery.js' %}"></script>
+  <script>
+      var elem = document.querySelector('.js-switch');
+      var init = new Switchery(elem, { color: '#ED5565' });
+  </script>
+{% endblock javascript %}
