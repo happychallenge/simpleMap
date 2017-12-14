@@ -26,7 +26,7 @@ SECRET_KEY = 'k^g)9$cg^2mfvuig%^x0=8dfh@x!daf!7%+du%+&0(z5^r#df0'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['www.ohtto.com']
 
 
 # Application definition
