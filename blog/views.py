@@ -1,18 +1,19 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from PIL import Image
 from dateutil import parser
-# from clarifai.rest import ClarifaiApp
+from clarifai.rest import ClarifaiApp
 
 
-from .models import Post, Tag, Content
+from .models import Post, Tag, Content, Theme
 from .forms import PostForm
 from .getGPS import get_lat_lon_dt
 
-# app = ClarifaiApp()
-# model = app.models.get('general-v1.3')
-# forbidden = ['backlit', 'light', 'no person', 'silhouette', 'sky']
+app = ClarifaiApp()
+model = app.models.get('general-v1.3')
+forbidden = ['backlit', 'light', 'no person', 'silhouette', 'sky']
 
 # Create your views here.
 def index(request):
@@ -69,19 +70,19 @@ def post_add(request):
                 content.save()
                 post.contents.add(content)
 
-                # response = model.predict_by_filename('.' + content.file.url)
-                # concepts = response['outputs'][0]['data']['concepts']
-                # tag_array = []
-                # for concept in concepts:
-                #     if concept['value'] > 0.95:
-                #         if concept['name'] not in forbidden:
-                #             obj, created = Tag.objects.get_or_create(tag=concept['name'])
-                #             tag_array.append(obj)
-                # content.tags.set(tag_array)
-                # tag_total.update(tag_array)
+                response = model.predict_by_filename('.' + content.file.url)
+                concepts = response['outputs'][0]['data']['concepts']
+                tag_array = []
+                for concept in concepts:
+                    if concept['value'] > 0.95:
+                        if concept['name'] not in forbidden:
+                            obj, created = Tag.objects.get_or_create(tag=concept['name'])
+                            tag_array.append(obj)
+                content.tags.set(tag_array)
+                tag_total.update(tag_array)
 
-            # tag_total = list(tag_total)
-            # post.tags.set(tag_total)
+            tag_total = list(tag_total)
+            post.tags.set(tag_total)
             post.lat = lat
             post.lng = lng
             post.save()
@@ -92,3 +93,55 @@ def post_add(request):
     else:
         form = PostForm()
         return render(request, 'blog/post_add.html', {'form': form})
+
+from os import listdir
+from os.path import isfile, join
+
+
+def file_upload():
+
+    user = get_user_model().objects.get(username='njyoon@naver.com')
+    theme = Theme.objects.get(id=6)
+
+    mypath = '/Users/happy/Django/simpleMap/media/drive'
+    pictures = [ join(mypath, file) for file in listdir(mypath) if isfile(join(mypath, file))]
+
+    for picture in pictures:
+        print(picture)
+        if picture != '/Users/happy/Django/simpleMap/media/drive/.DS_Store':
+            
+            post = Post()
+            post.create_user = user
+            post.theme = theme
+
+            post.save()
+
+            content = Content()
+            content.file = picture
+            image = Image.open(picture)
+
+            lat, lng, dt = get_lat_lon_dt(image)
+            if lat:
+                content.lat = lat
+                content.lng = lng
+            if dt:
+                dt = parser.parse(dt)
+                content.taken_dt = dt
+
+            content.save()
+            post.contents.add(content)
+
+            response = model.predict_by_filename(picture)
+            concepts = response['outputs'][0]['data']['concepts']
+            tag_array = []
+            for concept in concepts:
+                if concept['value'] > 0.95:
+                    if concept['name'] not in forbidden:
+                        obj, created = Tag.objects.get_or_create(tag=concept['name'])
+                        tag_array.append(obj)
+            content.tags.set(tag_array)
+
+            post.tags.set(tag_array)
+            post.lat = lat
+            post.lng = lng
+            post.save()

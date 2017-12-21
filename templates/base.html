@@ -19,6 +19,14 @@
   <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]-->
 <script src="https://use.fontawesome.com/658bb4caf7.js"></script>
+<style>
+  .navbar-fixed-top {
+    background-color: #2f4050;
+  }
+  .main{
+    margin-top: 80px;
+  }
+</style>
 {% block css %}
   
 {% endblock css %}
@@ -29,7 +37,7 @@
 {% include 'menu.html' %}
 
 
-<div>
+<div class="main">
 {% block main %}
   
 {% endblock main %}

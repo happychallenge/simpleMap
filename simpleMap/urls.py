@@ -24,7 +24,7 @@ from accounts import views as signup_views
 
 urlpatterns = [
     url('^$', lambda r: redirect('/blog/'), name='home'),
-    url(r'^admin/', admin.site.urls),
+    url(r'^xmlyoon/', admin.site.urls),
     url(r'^blog/', include('blog.urls', namespace='blog')),
 
     url(r'^signup/$', signup_views.signup, name='signup'),

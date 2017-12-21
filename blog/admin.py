@@ -6,14 +6,14 @@ from .models import Theme, Post, Content, Tag
 class ThemeAdmin(admin.ModelAdmin):
     class Meta:
         model = Theme
-    list_display = ['name', 'create_user']
+    list_display = ['id', 'name', 'create_user']
 
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
     class Meta:
         model = Post
-    list_display = [ 'id', 'theme', 'text', 'create_user']
+    list_display = [ 'id', 'theme', 'lat', 'lng', 'create_user']
 
 
 @admin.register(Content)
