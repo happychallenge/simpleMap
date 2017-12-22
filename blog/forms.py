@@ -16,6 +16,7 @@ class PostForm(forms.ModelForm):
         model = Post
         fields = ['theme', 'pictures', 'text',  'is_published']
 
-    # def __init__(self, user, *args, **kwargs):
-    #     super(PostForm, self).__init__(*args, **kwargs)
-    #     self.fields['theme'].queryset = Theme.objects.filter(create_user=user)
+    def __init__(self, user, *args, **kwargs):
+        super(PostForm, self).__init__(*args, **kwargs)
+        if self.instance:
+            self.fields['theme'].queryset = Theme.objects.filter(create_user=user)

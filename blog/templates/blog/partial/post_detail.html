@@ -1,6 +1,6 @@
 {% load static %}
 
-<div class="ibox float-e-margins">
+<div class="ibox float-e-margins" post-id="{{post.id}}">
     <div class="ibox-title">
         <a href="">
             <strong>{{ post.create_user.first_name }}</strong>
@@ -18,38 +18,46 @@
         </div>
         <div class="col-sm-12">
             {% if post.text %}
-            {{post.text}}
+              <p> {{post.text}} {{post.id}} </p>
             {% endif %}
         </div>
     </div>
 
     <div class="ibox-content">
-        <a class="btn btn-info btn-circle btn-outline btn-md" data-url="{{post.id}}" type="button">
-            <i class="fa fa-heart fa-3"></i>
-        </a>
-            <small>300</small> &nbsp;&nbsp;
-        <a class="btn btn-info btn-circle btn-outline btn-md" data-url="{{post.id}}" type="button">
+        <button class="btn-info btn-circle btn-outline btn-md like" data-url="{{post.id}}">
+            <i class="fa fa-heart-o fa-3"></i>
+        </button>
+        <span class="like-count" id="lcount-{{post.id}}"> {{post.like_count}}</span> &nbsp;&nbsp;
+
+        <button class="btn-info btn-circle btn-outline btn-md comment" data-url="{{post.id}}">
             <i class="fa fa-comment-o fa-3"></i>
-        </a>
-            <small>13</small> &nbsp;&nbsp;
-        <a class="btn btn-info btn-circle btn-outline btn-md" data-url="{{post.id}}" type="button">
+        </button>
+        <span class="comment-count" id="count-{{post.id}}"> {{post.comments.count}}</span> &nbsp;&nbsp;
+
+        <button class="btn-info btn-circle btn-outline btn-md bucket" data-url="{{post.id}}">
             <i class="fa fa-diamond fa-3"></i>
-        </a>
-            <small>20</small> &nbsp;&nbsp;
-        <a class="btn btn-info btn-circle btn-outline btn-md" data-url="{{post.id}}" type="button">
-            <i class="fa fa-share fa-3"></i>
-        </a>
-            <small>40</small> &nbsp;&nbsp;&nbsp;&nbsp;
+        </button>
+        <span class="bucket-count" id="bcount-{{post.id}}"> {{post.bucket_count}}</span> &nbsp;&nbsp;
+        
     {% if pList %}
-        <a class="btn btn-info btn-circle btn-outline btn-md btnMapMarker" data-url="{{post.id}}" type="button">
+        <button class="btn-info btn-circle btn-outline btn-md btnMapMarker" data-url="{{post.id}}">
             <i class="fa fa-map-marker fa-3"></i>
-        </a>
+        </button>
     {% endif %}
+
+
+    </div>
+{% if pList %}
+    {# AJAX COMMENT_LIST #}
+    <div class="social-footer comment_list" style="display:none;">
+        
     </div>
 
+    {# Tag List #}
     <div class="ibox-title">
-        {% for tag in post.tags.all %}
+        {% for tag in post.tag_set.all %}
             <span class="badge badge-info"> {{tag}} </span>
         {% endfor %}
     </div>
+{% endif %}
 </div>

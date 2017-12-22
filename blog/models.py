@@ -48,13 +48,47 @@ class Post(models.Model):
     create_user = models.ForeignKey(settings.AUTH_USER_MODEL)
     created_dt = models.DateTimeField(auto_now_add=True)
     contents = models.ManyToManyField(Content)
-    tags = models.ManyToManyField(Tag)
+    tag_set = models.ManyToManyField(Tag)
+    like_user_set = models.ManyToManyField(settings.AUTH_USER_MODEL,
+                                           blank=True,
+                                           related_name='like_user_set',
+                                           through='Like')  # post.like_set 으로 접근 가능
+    bucket_user_set = models.ManyToManyField(settings.AUTH_USER_MODEL,
+                                           blank=True,
+                                           related_name='bucket_user_set',
+                                           through='Bucket')  # post.bucket_set 으로 접근 가능
 
     class Meta:
         ordering = ('-id',)
 
+    @property
+    def like_count(self):
+        return self.like_user_set.count()
+
+    @property
+    def bucket_count(self):
+        return self.bucket_user_set.count()
 
 
+class Like(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL)
+    post = models.ForeignKey(Post)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = (
+            ('user', 'post')
+        )
+
+class Bucket(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL)
+    post = models.ForeignKey(Post)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = (
+            ('user', 'post')
+        )
 
 
 # class Post(models.Model):

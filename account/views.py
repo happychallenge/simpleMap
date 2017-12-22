@@ -28,7 +28,7 @@ def signup(request):
             user.save()
 
             current_site = get_current_site(request)
-            message = render_to_string('accounts/active_email.html', {
+            message = render_to_string('account/active_email.html', {
                     'user': user, 'domain': current_site.domain,
                     'uid': urlsafe_base64_encode(force_bytes(user.pk)),
                     'token': account_activation_token.make_token(user),
@@ -38,11 +38,11 @@ def signup(request):
             to_email = form.cleaned_data.get('email')
             email = EmailMessage(mail_subject, message, to=[to_email])
             email.send()
-            return render(request, 'accounts/send_email_for_confirm.html', {'email': to_email})
+            return render(request, 'account/send_email_for_confirm.html', {'email': to_email})
 
     else:
         form = SignUpForm()
-        return render(request, 'accounts/signup.html', {'form':form})
+        return render(request, 'account/signup.html', {'form':form})
 
 
 def activate(request, uidb64, token):
@@ -59,7 +59,7 @@ def activate(request, uidb64, token):
 
         return redirect('profile_edit')
     else:
-        return render(request, 'accounts/auth_fail.html')
+        return render(request, 'account/auth_fail.html')
 
 
 @login_required
@@ -67,13 +67,15 @@ def profile_edit(request):
     if request.method == 'POST':
         form = ProfileForm(request.POST, request.FILES)
         if form.is_valid():
-            profile = form.save()
-            
+            profile = form.save(commit=False)
+            # profile.user = request.user
+            profile.save()
+                        
             return redirect('profile_edit')
     else:
         form = ProfileForm()
         context = {'form':form}
-    return render(request, 'accounts/person_profile.html', context)
+    return render(request, 'account/profile.html', context)
 
 
 def logout(request):
@@ -110,9 +112,9 @@ def change_password(request):
             update_session_auth_hash(request, user)
             messages.add_message(request, messages.SUCCESS,
                                  'Your password was successfully changed.')
-            return redirect('accounts:profile_edit')
+            return redirect('account:profile_edit')
 
     else:
         form = ChangePasswordForm(instance=user)
 
-    return render(request, 'accounts/password.html', {'form': form})
+    return render(request, 'account/password.html', {'form': form})

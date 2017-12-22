@@ -20,15 +20,17 @@ from django.shortcuts import redirect
 from django.conf.urls.static import static
 from django.contrib.auth import views as login_views
 
-from accounts import views as signup_views
+from account import views as signup_views
 
 urlpatterns = [
     url('^$', lambda r: redirect('/blog/'), name='home'),
     url(r'^xmlyoon/', admin.site.urls),
     url(r'^blog/', include('blog.urls', namespace='blog')),
+    url(r'^comment/', include('comment.urls', namespace='comment')),
+    url(r'^account/', include('account.urls')),
 
     url(r'^signup/$', signup_views.signup, name='signup'),
-    url(r'^login', login_views.login, {'template_name': 'accounts/login.html'},
+    url(r'^login', login_views.login, {'template_name': 'account/login.html'},
         name='login'),
     url(r'^logout', signup_views.logout, name='logout'),
 ]

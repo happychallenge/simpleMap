@@ -133,23 +133,23 @@ class ProfileForm(forms.ModelForm):
             })
         }
 
-    def save(self):
-        person = super(ProfileForm, self).save()
+    def save(self, commit):
+        profile = super(ProfileForm, self).save(commit=commit)
 
-        if not person.picture:
-            return person 
+        if not profile.picture:
+            return profile 
 
-        x = self.cleaned_data.get('x', 0)
+        x = int(self.cleaned_data.get('x', 0))
         if not x:
-            return person
+            return profile
             
-        y = self.cleaned_data.get('y')
-        width = self.cleaned_data.get('width')
-        height = self.cleaned_data.get('height')
+        y = int(self.cleaned_data.get('y'))
+        width = int(self.cleaned_data.get('width'))
+        height = int(self.cleaned_data.get('height'))
 
-        image = Image.open(person.picture)
+        image = Image.open(profile.picture)
         cropped_image = image.crop((x, y, width+x, height+y))
         resized_image = cropped_image.resize((200, 200), Image.ANTIALIAS)
-        resized_image.save(person.picture.path)
+        resized_image.save(profile.picture.path)
 
-        return person
+        return profile

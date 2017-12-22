@@ -13,7 +13,7 @@ class Profile(models.Model):
                      null=True, blank=True)
     friends = models.ManyToManyField('self', related_name='friends')
     num = models.IntegerField(_('UID'), null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True,null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.user.first_name

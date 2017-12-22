@@ -1,7 +1,9 @@
+import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.http import JsonResponse, HttpResponse
 from PIL import Image
 from dateutil import parser
 from clarifai.rest import ClarifaiApp
@@ -20,15 +22,18 @@ def index(request):
     post_list = Post.objects.filter(is_published=True)
     return render(request, 'blog/index.html', {'post_list': post_list})
 
+
 def post_detail(request):
     id = request.GET.get('id')
     post = get_object_or_404(Post, id=id)
     return render(request, 'blog/partial/post_detail.html', {'post': post})
 
+
 @login_required
 def my_history(request):
     post_list = Post.objects.filter(create_user=request.user)
     return render(request, 'blog/my_history.html', {'post_list':post_list})
+
 
 @login_required
 def current_location_post(request):
@@ -37,15 +42,55 @@ def current_location_post(request):
     post_list = Post.objects.filter(is_published=True, lat__range=(lat - 0.3, lat + 0.3), lng__range=(lng - 0.3, lng + 0.3))
     return render(request, 'blog/index.html', {'post_list': post_list})
 
+
 @login_required
 def current_location(request):
     return render(request, 'blog/current_location.html')
 
 
 @login_required
+@require_POST
+def post_like(request):
+    pk = request.POST.get('pk', None)
+    post = get_object_or_404(Post, pk=pk)
+    post_like, created = post.like_set.get_or_create(user=request.user)
+
+    if not created:
+        post_like.delete()
+        message = "Cancel like"
+    else:
+        message = "Like"
+
+    context = {
+        'like_count': post.like_count, 'message': message,
+    }
+
+    return HttpResponse(json.dumps(context), content_type="application/json")
+
+@login_required
+@require_POST
+def post_bucket(request):
+    pk = request.POST.get('pk', None)
+    post = get_object_or_404(Post, pk=pk)
+    post_like, created = post.bucket_set.get_or_create(user=request.user)
+
+    if not created:
+        post_like.delete()
+        message = "Cancel the bucket List"
+    else:
+        message = "Add the post into bucket List"
+
+    context = {
+        'bucket_count': post.bucket_count, 'message': message,
+    }
+
+    return HttpResponse(json.dumps(context), content_type="application/json")
+
+
+@login_required
 def post_add(request):
     if request.method == 'POST':
-        form = PostForm(request.POST, request.FILES)
+        form = PostForm(request.user, request.POST, request.FILES)
         if form.is_valid():
             post = form.save(commit=False)
             post.create_user = request.user
@@ -82,7 +127,7 @@ def post_add(request):
                 tag_total.update(tag_array)
 
             tag_total = list(tag_total)
-            post.tags.set(tag_total)
+            post.tag_set.set(tag_total)
             post.lat = lat
             post.lng = lng
             post.save()
@@ -91,7 +136,7 @@ def post_add(request):
             return redirect('blog:index')
 
     else:
-        form = PostForm()
+        form = PostForm(user=request.user)
         return render(request, 'blog/post_add.html', {'form': form})
 
 from os import listdir

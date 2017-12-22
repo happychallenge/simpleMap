@@ -112,7 +112,7 @@ function populateInfoWindow(marker, infoWindow) {
         infoWindow.open(map, marker);
 
         infoWindow.addListener('closeclick',function() {
-            infoWindow.setMarket(null);
+            infoWindow.setMarker(null);
         });
     }
 }
@@ -128,7 +128,6 @@ src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDXY6uFicQrbFZ-ddMHg2eQrFT
 $("div.content_list").on("click", ".btnMapMarker", function(){
 
     var photo_id = $(this).attr('data-url');
-    
     animateMarker(photo_id);
 });
 
@@ -143,8 +142,6 @@ function animateMarker(photo_id){
     }
 }
 </script>
-
-
 
 
 {% endblock javascript %}

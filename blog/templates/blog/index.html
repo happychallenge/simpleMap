@@ -35,26 +35,7 @@
 
 
 {% block modal %}
-<!-- Modal --> 
-<div class="modal" tabindex="-1" role="dialog" id="modal-post">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 class="modal-title">Add Content</h3>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <p>Modal body text goes here.</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary">Save changes</button>
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-      </div>
-    </div>
-  </div>
-</div>
+
 {% endblock modal %}
 
 
@@ -154,7 +135,6 @@ function populateInfoWindow(marker, infoWindow) {
         });
     }
 }
-
 </script>
 <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js">
 </script>
@@ -162,59 +142,6 @@ function populateInfoWindow(marker, infoWindow) {
 src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDXY6uFicQrbFZ-ddMHg2eQrFT9BAVqLOo&callback=initMap">
 </script>
 
-<script>
-$("div.content_list").on("click", ".btnMapMarker", function(){
+{% include 'blog/script.html' %}
 
-    var photo_id = $(this).attr('data-url');
-    animateMarker(photo_id);
-});
-
-function animateMarker(photo_id){
-    for (var i = 0; i < markers.length; i++) {
-        if(markers[i].id == photo_id){
-            markers[i].setAnimation(google.maps.Animation.BOUNCE);
-            map.setZoom(14);
-            map.setCenter(markers[i].position);
-        }
-    }
-}
-</script>
-
-<script>
-var loadForm = function () {
-  var btn = $(this);
-  $.ajax({
-    url: "", 
-    type: 'GET',
-    dataType: 'html',
-    beforeSend: function () {
-      $("#modal_post").modal("show");
-      console.log("Call before LoadForm");
-    },
-    success: function (data) {
-      $("#modal_post .modal_body").html(data);
-      console.log("Call LoadForm");
-    }
-  });
-};
-
-$(".content_add").click(loadForm);
-
-function displayImage(input){
-   if(input.files && input.files[0]){
-       var reader = new FileReader();
-
-       reader.onload = function(evt){
-          $("#id_pic_dis").attr('src', evt.target.result);
-       }
-
-       reader.readAsDataURL(input.files[0]);
-   } 
-}
-
-$("#id_picture").change(function(){
-    displayImage(this);
-});
- 
-</script>
 {% endblock javascript %}

@@ -20,7 +20,7 @@
         <div>
             <div class="ibox float-e-margins">
                 <div class="ibox-title">
-                    <h5>로그인 <small> 사용자 로그인 </small></h5>
+                    <h5>Login <small> User Login </small></h5>
                     <div class="ibox-tools">
                         <a class="collapse-link">
                             <i class="fa fa-chevron-up"></i>
@@ -30,7 +30,7 @@
                 <div class="ibox-content">
                     <div class="row">
                         <div class="col-sm-6">
-                            <h2 class="m-t-none m-b">로그인</h2>
+                            <h2 class="m-t-none m-b">Login</h2>
 
                             <form method="post" action="{% url 'login' %}" role="form">
                                 {% csrf_token %}
@@ -55,9 +55,9 @@
                             </form>
                         </div>
 
-                        <div class="col-sm-6"><h3>계정이 없는 경우?</h3>
+                        <div class="col-sm-6"><h3>If you don't have an account</h3>
                             <a href="{% url 'signup' %}"> 
-                              <p>새로운 계정을 만드시기 바랍니다.</p>
+                              <p>Please new account</p>
                               <p class="text-center">
                                   <i class="fa fa-sign-in big-icon"></i>
                               </p>
