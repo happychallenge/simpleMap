@@ -15,8 +15,8 @@ class Theme(models.Model):
     """docstring for Subject"""
     """ Subject """
     name = models.CharField(max_length=30)
-    create_user = models.ForeignKey(settings.AUTH_USER_MODEL)
-    created_dt = models.DateTimeField(auto_now_add=True)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL)
+    create_dt = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.name
@@ -31,10 +31,11 @@ class Content(models.Model):
     lng = models.FloatField(default=0)
     taken_dt = models.DateTimeField(blank=True, null=True)
     tags = models.ManyToManyField(Tag)
-    created_dt = models.DateTimeField(auto_now_add=True)
+    create_dt = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.file.url
+
 
 class Post(models.Model):
     """docstring for Post"""
@@ -45,8 +46,8 @@ class Post(models.Model):
     lat = models.FloatField(default=0, blank=True, null=True)
     lng = models.FloatField(default=0, blank=True, null=True)
     is_published = models.BooleanField(default=True)
-    create_user = models.ForeignKey(settings.AUTH_USER_MODEL)
-    created_dt = models.DateTimeField(auto_now_add=True)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL)
+    create_dt = models.DateTimeField(auto_now_add=True)
     contents = models.ManyToManyField(Content)
     tag_set = models.ManyToManyField(Tag)
     like_user_set = models.ManyToManyField(settings.AUTH_USER_MODEL,
@@ -61,6 +62,9 @@ class Post(models.Model):
     class Meta:
         ordering = ('-id',)
 
+    def __str__(self):
+        return "{} - {}".format(self.id, self.text)
+
     @property
     def like_count(self):
         return self.like_user_set.count()
@@ -73,7 +77,7 @@ class Post(models.Model):
 class Like(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL)
     post = models.ForeignKey(Post)
-    created_at = models.DateTimeField(auto_now_add=True)
+    create_dt = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = (
@@ -81,35 +85,65 @@ class Like(models.Model):
         )
 
 class Bucket(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='buckets')
     post = models.ForeignKey(Post)
-    created_at = models.DateTimeField(auto_now_add=True)
+    create_dt = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = (
             ('user', 'post')
         )
 
+from os import listdir
+from os.path import isfile, join
+def file_upload():
 
-# class Post(models.Model):
-#     """ Picture/Clip/Article """
-#     TEXT = 'T'
-#     PHOTO ='P'
-#     CLIP = 'M'
-#     CONTENT_CHOICES = (
-#         (TEXT, _('Text')),
-#         (PHOTO, _('Photo')),
-#         (CLIP, _('Clip')),
-#     )
-#     cont_type = models.CharField(max_length=1, choices=CONTENT_CHOICES, default=PHOTO)
-#     cont_file = models.FileField(null=True, blank=True)
-#     article = models.TextField(null=True, blank=True)
-#     # taken_pos = models.PointField(null=True, blank=True)
-#     # write_pos = models.PointField(null=True, blank=True)
-#     likes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='likes')
-#     following = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='following')
-#     create_user = models.ForeignKey(settings.AUTH_USER_MODEL)
-#     created_at = models.DateTimeField(auto_now_add=True,null=True, blank=True)
+    user = get_user_model().objects.get(username='njyoon@naver.com')
+    theme = Theme.objects.get(id=6)
+
+    mypath = '/Users/happy/Django/simpleMap/media/drive'
+    pictures = [ join(mypath, file) for file in listdir(mypath) if isfile(join(mypath, file))]
+
+    for picture in pictures:
+        print(picture)
+        if picture != '/Users/happy/Django/simpleMap/media/drive/.DS_Store':
+            
+            post = Post()
+            post.author = user
+            post.theme = theme
+
+            post.save()
+
+            content = Content()
+            content.file = picture
+            image = Image.open(picture)
+
+            lat, lng, dt = get_lat_lon_dt(image)
+            if lat:
+                content.lat = lat
+                content.lng = lng
+            if dt:
+                dt = parser.parse(dt)
+                content.taken_dt = dt
+
+            content.save()
+            post.contents.add(content)
+
+            response = model.predict_by_filename(picture)
+            concepts = response['outputs'][0]['data']['concepts']
+            tag_array = []
+            for concept in concepts:
+                if concept['value'] > 0.95:
+                    if concept['name'] not in forbidden:
+                        obj, created = Tag.objects.get_or_create(tag=concept['name'])
+                        tag_array.append(obj)
+            content.tags.set(tag_array)
+
+            post.tags.set(tag_array)
+            post.lat = lat
+            post.lng = lng
+            post.save()
+
 
 
 # from openpyxl import load_workbook

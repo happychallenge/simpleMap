@@ -45,6 +45,7 @@ var map;
 var markers = [];
 var bounds;
 
+
 function initMap() {
 
   map = new google.maps.Map(document.getElementById('map'), {
@@ -60,6 +61,9 @@ function initMap() {
         lat: position.coords.latitude,
         lng: position.coords.longitude
       };
+      myLat = position.coords.latitude;
+      myLng = position.coords.longitude;
+      
       var marker = new google.maps.Marker({
         position: pos,
         label: 'My',

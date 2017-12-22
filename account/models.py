@@ -3,57 +3,104 @@ from django.conf import settings
 from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy as _
 
+from activity.models import Notification
 # Create your models here.
 class Profile(models.Model):
     """docstring for Person"""
     """ 기억할 인물에 대한 설명 """
     user = models.OneToOneField(settings.AUTH_USER_MODEL)
+    nickname = models.CharField(max_length=30)
     birthdate = models.DateTimeField(_('Birth Date'), null=True, blank=True)
     picture = models.ImageField(_('Profile Picture'), upload_to='person_profile/%Y/%m/',
                      null=True, blank=True)
-    friends = models.ManyToManyField('self', related_name='friends')
+    friend_set = models.ManyToManyField('self',
+                                    blank=True,
+                                    through='Relation',
+                                    symmetrical=False, )
     num = models.IntegerField(_('UID'), null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    create_dt = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.user.first_name
 
-    def friend_list(self):
-        friends = self.friends.all()
-        html = ''
-        for friend in friends:
-            html = "{} {}".format(html, friend.user)
+    @property
+    def get_follower(self):
+        return [i.from_user for i in self.follower_user.all()]
 
-        return html
+    @property
+    def get_following(self):
+        return [i.to_user for i in self.follow_user.all()]
+
+    @property
+    def follower_count(self):
+        return len(self.get_follower)
+
+    @property
+    def following_count(self):
+        return len(self.get_following)
+
+    def is_follower(self, user):
+        return user in self.get_follower
+
+    def is_following(self, user):
+        return user in self.get_following
+
+    def get_bucket_list(self):
+        user = self.user
+        return [i.post for i in user.buckets.all()]
+
+    def notify_post_liked(self, post):
+        if self.user != post.author:
+            Notification(notification_type=Notification.LIKED, 
+                from_user=self.user, to_user=post.author,
+                post=post).save()
+
+    def notify_post_unliked(self, post):
+        if self.user != post.author:
+            Notification.objects.filter(notification_type=Notification.LIKED,
+                from_user=self.user, to_user=post.author,post=post).delete()
+
+    def notify_post_commented(self, post):
+        if self.user != post.author:
+            Notification(notification_type=Notification.COMMENTED, 
+                from_user=self.user, to_user=post.author,
+                post=post).save()
+
+    def notify_post_bucketed(self, post):
+        if self.user != post.author:
+            Notification(notification_type=Notification.BUCKET, 
+                from_user=self.user, to_user=post.author,
+                post=post).save()
+
+    def notify_post_unbucketed(self, post):
+        if self.user != post.author:
+            Notification(notification_type=Notification.BUCKET, 
+                from_user=self.user, to_user=post.author,
+                post=post).delete()
+
+class Relation(models.Model):
+    FRIEND = 'F'
+    BREAK = 'B'
+    REJECT = 'R'
+    STATUS = (
+        (FRIEND, 'Friend'),
+        (BREAK, 'Break'),
+        (REJECT, 'Reject'),
+    )
+    from_user = models.ForeignKey(Profile, related_name='follow_user')
+    to_user = models.ForeignKey(Profile, related_name='follower_user')
+    status = models.CharField(max_length=1, choices=STATUS, default=FRIEND)
+    create_dt = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return "{} -> {}".format(self.from_user, self.to_user)
+
+    class Meta:
+        unique_together = (
+            ('from_user', 'to_user')
+        )
 
 
-    # def notify_person_liked(self, person):
-    #     if self.user != person.created_user:
-    #         Notification(notification_type=Notification.LIKED, 
-    #             from_user=self.user, to_user=person.created_user,
-    #             person=person).save()
-
-    # def notify_person_unliked(self, person):
-    #     if self.user != person.created_user:
-    #         Notification.objects.filter(notification_type=Notification.LIKED,
-    #             from_user=self.user, to_user=person.created_user,person=person).delete()
-
-    # def notify_person_commented(self, person):
-    #     if self.user != person.created_user:
-    #         Notification(notification_type=Notification.COMMENTED, 
-    #             from_user=self.user, to_user=person.created_user,
-    #             person=person).save()
-
-    # def notify_person_following(self, person):
-    #     if self.user != person.created_user:
-    #         Notification(notification_type=Notification.FOLLOWING, 
-    #             from_user=self.user, to_user=person.created_user,
-    #             person=person).save()
-
-    # def notify_person_unfollowing(self, person):
-    #     if self.user != person.created_user:
-    #         Notification.objects.filter(notification_type=Notification.FOLLOWING,
-    #             from_user=self.user, to_user=person.created_user,person=person).delete()
 
 def create_user_profile(sender, instance, created, **kwargs):
     if created:

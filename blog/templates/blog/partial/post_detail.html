@@ -3,18 +3,16 @@
 <div class="ibox float-e-margins" post-id="{{post.id}}">
     <div class="ibox-title">
         <a href="">
-            <strong>{{ post.create_user.first_name }}</strong>
+            <strong>{{ post.author.first_name }}</strong>
         </a>
     </div>
     <div class="ibox-content">
-        <div class="col-sm-12">
-            <div class="text-center">
-              {% for file in post.contents.all %}
-                <img alt="image" class="m-t-xs img-responsive" 
-                width="{% if pList %}100%{% else %}300px{% endif %}" 
-                src="{{file.file.url}}"/>
-              {% endfor %}
-            </div>
+        <div class="text-center">
+          {% for file in post.contents.all %}
+            <img alt="image" class="m-t-xs img-responsive" 
+            width="{% if pList %}100%{% else %}300px{% endif %}" 
+            src="{{file.file.url}}"/>
+          {% endfor %}
         </div>
         <div class="col-sm-12">
             {% if post.text %}

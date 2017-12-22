@@ -14,7 +14,7 @@ from os.path import dirname, abspath, join
 from django.core.urlresolvers import reverse_lazy
 
 # Build paths inside the project like this: join(BASE_DIR, ...)
-BASE_DIR = dirname(dirname(abspath(__file__)))
+BASE_DIR = dirname(dirname(dirname(abspath(__file__))))
 
 
 # Quick-start development settings - unsuitable for production
@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'account',
     'blog',
     'comment',
+    'activity',
 ]
 
 MIDDLEWARE = [

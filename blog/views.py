@@ -9,7 +9,7 @@ from dateutil import parser
 from clarifai.rest import ClarifaiApp
 
 
-from .models import Post, Tag, Content, Theme
+from .models import Post, Tag, Content, Theme, Bucket
 from .forms import PostForm
 from .getGPS import get_lat_lon_dt
 
@@ -19,7 +19,11 @@ forbidden = ['backlit', 'light', 'no person', 'silhouette', 'sky']
 
 # Create your views here.
 def index(request):
-    post_list = Post.objects.filter(is_published=True)
+    friend_set = request.user.profile.get_following
+
+    post_list = Post.objects.filter(is_published=True, author__profile__in=friend_set) \
+        .prefetch_related('tag_set', 'like_user_set__profile') \
+        .select_related('author__profile')
     return render(request, 'blog/index.html', {'post_list': post_list})
 
 
@@ -31,12 +35,12 @@ def post_detail(request):
 
 @login_required
 def my_history(request):
-    post_list = Post.objects.filter(create_user=request.user)
-    return render(request, 'blog/my_history.html', {'post_list':post_list})
+    post_list = Post.objects.filter(author=request.user)
+    return render(request, 'blog/on_map.html', {'post_list':post_list})
 
 
 @login_required
-def current_location_post(request):
+def current_location(request):
     lat = float(request.GET.get('lat'))
     lng = float(request.GET.get('lng'))
     post_list = Post.objects.filter(is_published=True, lat__range=(lat - 0.3, lat + 0.3), lng__range=(lng - 0.3, lng + 0.3))
@@ -44,8 +48,9 @@ def current_location_post(request):
 
 
 @login_required
-def current_location(request):
-    return render(request, 'blog/current_location.html')
+def my_bucket_list(request):
+    post_list = request.user.profile.get_bucket_list
+    return render(request, 'blog/on_map.html', {'post_list':post_list})
 
 
 @login_required
@@ -60,7 +65,7 @@ def post_like(request):
         message = "Cancel like"
     else:
         message = "Like"
-
+        request.user.profile.notify_post_liked(post)
     context = {
         'like_count': post.like_count, 'message': message,
     }
@@ -79,6 +84,7 @@ def post_bucket(request):
         message = "Cancel the bucket List"
     else:
         message = "Add the post into bucket List"
+        request.user.profile.notify_post_bucketed(post)
 
     context = {
         'bucket_count': post.bucket_count, 'message': message,
@@ -93,7 +99,7 @@ def post_add(request):
         form = PostForm(request.user, request.POST, request.FILES)
         if form.is_valid():
             post = form.save(commit=False)
-            post.create_user = request.user
+            post.author = request.user
             post.save()
 
             pictures = request.FILES.getlist('pictures')
@@ -139,54 +145,6 @@ def post_add(request):
         form = PostForm(user=request.user)
         return render(request, 'blog/post_add.html', {'form': form})
 
-from os import listdir
-from os.path import isfile, join
 
 
-def file_upload():
 
-    user = get_user_model().objects.get(username='njyoon@naver.com')
-    theme = Theme.objects.get(id=6)
-
-    mypath = '/Users/happy/Django/simpleMap/media/drive'
-    pictures = [ join(mypath, file) for file in listdir(mypath) if isfile(join(mypath, file))]
-
-    for picture in pictures:
-        print(picture)
-        if picture != '/Users/happy/Django/simpleMap/media/drive/.DS_Store':
-            
-            post = Post()
-            post.create_user = user
-            post.theme = theme
-
-            post.save()
-
-            content = Content()
-            content.file = picture
-            image = Image.open(picture)
-
-            lat, lng, dt = get_lat_lon_dt(image)
-            if lat:
-                content.lat = lat
-                content.lng = lng
-            if dt:
-                dt = parser.parse(dt)
-                content.taken_dt = dt
-
-            content.save()
-            post.contents.add(content)
-
-            response = model.predict_by_filename(picture)
-            concepts = response['outputs'][0]['data']['concepts']
-            tag_array = []
-            for concept in concepts:
-                if concept['value'] > 0.95:
-                    if concept['name'] not in forbidden:
-                        obj, created = Tag.objects.get_or_create(tag=concept['name'])
-                        tag_array.append(obj)
-            content.tags.set(tag_array)
-
-            post.tags.set(tag_array)
-            post.lat = lat
-            post.lng = lng
-            post.save()
