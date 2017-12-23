@@ -1,5 +1,14 @@
+from dateutil import parser
 from django.db import models
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from PIL import Image
+from clarifai.rest import ClarifaiApp
+from .getGPS import get_lat_lon_dt
+
+app = ClarifaiApp()
+model = app.models.get('general-v1.3')
+forbidden = ['backlit', 'light', 'no person', 'silhouette', 'sky']
 
 # Create your models here.
 class Tag(models.Model):
@@ -14,8 +23,16 @@ class Tag(models.Model):
 class Theme(models.Model):
     """docstring for Subject"""
     """ Subject """
+    PUBLIC = 'P'
+    PRIVATE = 'V'
+
+    STATUS = (
+        (PUBLIC, 'Public'),
+        (PRIVATE, 'Private'),
+    )
     name = models.CharField(max_length=30)
     author = models.ForeignKey(settings.AUTH_USER_MODEL)
+    status = models.CharField(max_length=1, choices=STATUS, default=PUBLIC)
     create_dt = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -30,11 +47,11 @@ class Content(models.Model):
     lat = models.FloatField(default=0)
     lng = models.FloatField(default=0)
     taken_dt = models.DateTimeField(blank=True, null=True)
-    tags = models.ManyToManyField(Tag)
+    tag_set = models.ManyToManyField(Tag)
     create_dt = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.file.url
+        return "{} {}".format(self.id, self.file.url)
 
 
 class Post(models.Model):
@@ -101,48 +118,50 @@ def file_upload():
     user = get_user_model().objects.get(username='njyoon@naver.com')
     theme = Theme.objects.get(id=6)
 
-    mypath = '/Users/happy/Django/simpleMap/media/drive'
-    pictures = [ join(mypath, file) for file in listdir(mypath) if isfile(join(mypath, file))]
+    db_path = 'contents/2017/cc'
+    mypath = '/Users/happy/Django/simpleMap/media/contents/2017/cc'
+    for file in listdir(mypath):
+        if isfile(join(mypath, file)):
+            fullpath = join(mypath,file)
+            db_save_path = join(db_path, file)
 
-    for picture in pictures:
-        print(picture)
-        if picture != '/Users/happy/Django/simpleMap/media/drive/.DS_Store':
-            
-            post = Post()
-            post.author = user
-            post.theme = theme
+            if fullpath != '/Users/happy/Django/simpleMap/media/contents/2017/cc/.DS_Store':
+                
+                post = Post()
+                post.author = user
+                post.theme = theme
 
-            post.save()
+                post.save()
 
-            content = Content()
-            content.file = picture
-            image = Image.open(picture)
+                content = Content()
+                content.file = db_save_path
+                image = Image.open(fullpath)
 
-            lat, lng, dt = get_lat_lon_dt(image)
-            if lat:
-                content.lat = lat
-                content.lng = lng
-            if dt:
-                dt = parser.parse(dt)
-                content.taken_dt = dt
+                lat, lng, dt = get_lat_lon_dt(image)
+                if lat:
+                    content.lat = lat
+                    content.lng = lng
+                if dt:
+                    dt = parser.parse(dt)
+                    content.taken_dt = dt
 
-            content.save()
-            post.contents.add(content)
+                content.save()
+                post.contents.add(content)
 
-            response = model.predict_by_filename(picture)
-            concepts = response['outputs'][0]['data']['concepts']
-            tag_array = []
-            for concept in concepts:
-                if concept['value'] > 0.95:
-                    if concept['name'] not in forbidden:
-                        obj, created = Tag.objects.get_or_create(tag=concept['name'])
-                        tag_array.append(obj)
-            content.tags.set(tag_array)
+                response = model.predict_by_filename(fullpath)
+                concepts = response['outputs'][0]['data']['concepts']
+                tag_array = []
+                for concept in concepts:
+                    if concept['value'] > 0.95:
+                        if concept['name'] not in forbidden:
+                            obj, created = Tag.objects.get_or_create(tag=concept['name'])
+                            tag_array.append(obj)
+                content.tag_set.set(tag_array)
 
-            post.tags.set(tag_array)
-            post.lat = lat
-            post.lng = lng
-            post.save()
+                post.tag_set.set(tag_array)
+                post.lat = lat
+                post.lng = lng
+                post.save()
 
 
 

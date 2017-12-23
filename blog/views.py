@@ -5,17 +5,10 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse, HttpResponse
 from PIL import Image
-from dateutil import parser
-from clarifai.rest import ClarifaiApp
-
 
 from .models import Post, Tag, Content, Theme, Bucket
 from .forms import PostForm
-from .getGPS import get_lat_lon_dt
 
-app = ClarifaiApp()
-model = app.models.get('general-v1.3')
-forbidden = ['backlit', 'light', 'no person', 'silhouette', 'sky']
 
 # Create your views here.
 def index(request):
@@ -23,7 +16,7 @@ def index(request):
 
     post_list = Post.objects.filter(is_published=True, author__profile__in=friend_set) \
         .prefetch_related('tag_set', 'like_user_set__profile') \
-        .select_related('author__profile')
+        .select_related('author__profile')[:50]
     return render(request, 'blog/index.html', {'post_list': post_list})
 
 
@@ -92,7 +85,6 @@ def post_bucket(request):
 
     return HttpResponse(json.dumps(context), content_type="application/json")
 
-
 @login_required
 def post_add(request):
     if request.method == 'POST':
@@ -108,7 +100,6 @@ def post_add(request):
             for file in pictures:
                 content = Content()
             # Read Position from Picture
-                content.file = file
                 image = Image.open(file)
                 lat, lng, dt = get_lat_lon_dt(image)
                 if lat:
@@ -118,6 +109,11 @@ def post_add(request):
                     dt = parser.parse(dt)
                     content.taken_dt = dt
 
+                w, h = image.size
+                image = image.resize((w//2, h//2), Image.ANTIALIAS)
+                image.save(file, 'JPEG', quality=90)
+                
+                content.file = file
                 content.save()
                 post.contents.add(content)
 

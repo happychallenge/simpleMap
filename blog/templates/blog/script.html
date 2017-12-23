@@ -9,7 +9,7 @@ function animateMarker(photo_id){
     for (var i = 0; i < markers.length; i++) {
         if(markers[i].id == photo_id){
             markers[i].setAnimation(google.maps.Animation.BOUNCE);
-            map.setZoom(14);
+            map.setZoom(15);
             map.setCenter(markers[i].position);
         }
     }

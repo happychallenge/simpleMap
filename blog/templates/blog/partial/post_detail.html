@@ -15,9 +15,11 @@
           {% endfor %}
         </div>
         <div class="col-sm-12">
+            <p> {{post.id}} 
             {% if post.text %}
-              <p> {{post.text}} {{post.id}} </p>
+            {{post.text}}  
             {% endif %}
+            </p>
         </div>
     </div>
 
@@ -38,9 +40,11 @@
         <span class="bucket-count" id="bcount-{{post.id}}"> {{post.bucket_count}}</span> &nbsp;&nbsp;
         
     {% if pList %}
+        {% if post.lat and post.lat != 0.0 and post.lat is not None %}
         <button class="btn-info btn-circle btn-outline btn-md btnMapMarker" data-url="{{post.id}}">
             <i class="fa fa-map-marker fa-3"></i>
         </button>
+        {% endif %}
     {% endif %}
 
 
